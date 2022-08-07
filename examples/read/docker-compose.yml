@@ -1,0 +1,18 @@
+services:
+  wireshark:
+    image: lscr.io/linuxserver/wireshark:latest
+    container_name: wireshark
+    cap_add:
+      - NET_ADMIN
+    ports: 
+     - 14840:14840
+     - 3000:3000
+  opcua:
+    image: open62541/open62541
+    container_name: opcua
+  nginx:
+    image: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    container_name: nginx
+    network_mode: "service:wireshark"     

@@ -8,6 +8,7 @@ import (
 	"context"
 	"flag"
 	"log"
+	"time"
 
 	"github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/debug"
@@ -15,9 +16,10 @@ import (
 )
 
 func main() {
+
 	var (
-		endpoint = flag.String("endpoint", "opc.tcp://localhost:4840", "OPC UA Endpoint URL")
-		nodeID   = flag.String("node", "", "NodeID to read")
+		endpoint = flag.String("endpoint", "opc.tcp://localhost:14840", "OPC UA Endpoint URL")
+		nodeID   = flag.String("node", "ns=1;i=2345", "NodeID to read")
 	)
 	flag.BoolVar(&debug.Enable, "debug", false, "enable debug logging")
 	flag.Parse()
@@ -44,12 +46,16 @@ func main() {
 		TimestampsToReturn: ua.TimestampsToReturnBoth,
 	}
 
-	resp, err := c.ReadWithContext(ctx, req)
-	if err != nil {
-		log.Fatalf("Read failed: %s", err)
+	for range time.Tick(time.Second * 10) {
+		log.Printf("Starting acquisition")
+		resp, err := c.ReadWithContext(ctx, req)
+		if err != nil {
+			log.Printf("Read failed: %s", err)
+			continue
+		}
+		if resp.Results[0].Status != ua.StatusOK {
+			log.Printf("Status not OK: %v", resp.Results[0].Status)
+		}
+		log.Printf("%#v", resp.Results[0].Value.Value())
 	}
-	if resp.Results[0].Status != ua.StatusOK {
-		log.Fatalf("Status not OK: %v", resp.Results[0].Status)
-	}
-	log.Printf("%#v", resp.Results[0].Value.Value())
 }
